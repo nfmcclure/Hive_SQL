@@ -1,0 +1,291 @@
+######--------------Working Join---------------
+SELECT *
+        FROM   cc_trx C
+               JOIN pos_trans_hdr P
+                 ON ( C.prop_code = P.c_prop_cd
+                      AND Substr(C.trx_date,1,10) = P.d_pos_trans_dt
+                      AND C.amount = P.f_total_payment_amt )
+
+WHERE
+Concat(Substr(c.trx_date, 1, 10), Substr(c.auth_time, 1,
+                                       Length(c.auth_time) - 4), Substr(c.auth_time, Length(c.auth_time) - 3, 2), Substr(c.auth_time,
+                                                                                                                            Length(c.auth_time) - 1, 2)) >= 
+
+Regexp_replace(":","",Regexp_replace("-","",Regexp_replace("\s","",p.d_pos_trans_start_time)))
+AND
+Concat(Substr(c.trx_date, 1, 10), Substr(c.auth_time, 1,
+                                       Length(c.auth_time) - 4), Substr(c.auth_time, Length(c.auth_time) - 3, 2), Substr(c.auth_time,
+                                                                                                                            Length(c.auth_time) - 1, 2)) <= 
+
+Regexp_replace(":","",Regexp_replace("-","",Regexp_replace("\s","",p.d_pos_trans_end_time)))
+
+AND c.region='LVM'
+
+LIMIT 10
+
+######--------------Working LARGER Join---------------
+SELECT *
+        FROM   cc_trx C
+               JOIN pos_trans_hdr P
+                 ON ( C.prop_code = P.c_prop_cd
+                      AND Substr(C.trx_date,1,10) = P.d_pos_trans_dt
+                      AND C.amount = P.f_total_payment_amt )
+
+AND c.prop_code='CLV'
+LIMIT 100000
+
+
+
+######--------------Draft one---------------
+SELECT *
+FROM cc_trx C JOIN POS_trans_hdr P
+ON (C.prop_code=P.c_prop_cd
+AND C.pos_amt=P.f_total_payment_amt
+    
+    from_unixtime(unix_timestamp(concat(substr(C.trx_date,1,10)," ",substr(C.Auth_Time,1,length(C.Auth_Time)-4),":",substr(C.Auth_Time,length(C.Auth_Time)-3,2),":",substr(C.Auth_Time,length(C.Auth_Time)-1,2))), 'yyyy-MM-dd HH:mm:ss')
+    
+    
+AND regex_substr(trx_date,1,10)
+    cast(C.Auth_Time as timestamp) BETWEEN cast(P.d_pos_trans_start_time as timestamp) AND cast(P.d_pos_trans_end_time as timestamp))
+LIMIT 10
+
+
+######--------------Draft TWO---------------
+SELECT *
+FROM cc_trx C JOIN POS_trans_hdr P
+ON (C.prop_code=P.c_prop_cd
+AND C.pos_amt=P.f_total_payment_amt
+    
+AND cast(from_unixtime(unix_timestamp(concat(substr(C.trx_date,1,10)," ",substr(C.Auth_Time,1,length(C.Auth_Time)-4),":",substr(C.Auth_Time,length(C.Auth_Time)-3,2),":",substr(C.Auth_Time,length(C.Auth_Time)-1,2))), 'yyyy-MM-dd HH:mm:ss')as timestamp) >= cast(from_unixtime(unix_timestamp(P.d_pos_trans_start_time), 'yyyy-MM-dd HH:mm:ss') as timestamp)
+
+AND cast(from_unixtime(unix_timestamp(concat(substr(C.trx_date,1,10)," ",substr(C.Auth_Time,1,length(C.Auth_Time)-4),":",substr(C.Auth_Time,length(C.Auth_Time)-3,2),":",substr(C.Auth_Time,length(C.Auth_Time)-1,2))), 'yyyy-MM-dd HH:mm:ss')as timestamp) <= cast(from_unixtime(unix_timestamp(P.d_pos_trans_end_time), 'yyyy-MM-dd HH:mm:ss') as timestamp))
+
+LIMIT 10
+
+######--------------Draft Three---------------
+SELECT *
+FROM cc_trx C JOIN POS_trans_hdr P
+ON (C.prop_code=P.c_prop_cd
+AND C.pos_amt=P.f_total_payment_amt
+AND (cast(from_unixtime(unix_timestamp(concat(substr(C.trx_date,1,10)," ",substr(C.Auth_Time,1,length(C.Auth_Time)-4),":",substr(C.Auth_Time,length(C.Auth_Time)-3,2),":",substr(C.Auth_Time,length(C.Auth_Time)-1,2))), 'yyyy-MM-dd HH:mm:ss')as timestamp) = cast(from_unixtime(unix_timestamp(P.d_pos_trans_start_time), 'yyyy-MM-dd HH:mm:ss') as timestamp)
+| cast(from_unixtime(unix_timestamp(concat(substr(C.trx_date,1,10)," ",substr(C.Auth_Time,1,length(C.Auth_Time)-4),":",substr(C.Auth_Time,length(C.Auth_Time)-3,2),":",substr(C.Auth_Time,length(C.Auth_Time)-1,2))), 'yyyy-MM-dd HH:mm:ss')as timestamp) = cast(from_unixtime(unix_timestamp(P.d_pos_trans_end_time), 'yyyy-MM-dd HH:mm:ss') as timestamp)))
+LIMIT 10
+
+#####--------------Draft four------------------
+SELECT * FROM
+
+(SELECT *
+FROM cc_trx_vegas C JOIN POS_trans_hdr P
+ON (C.prop_code=P.c_prop_cd
+    AND C.trx_date=P.d_pos_trans_dt
+    AND C.pos_amt=P.f_total_payment_amt))
+
+    
+WHERE cast(from_unixtime(unix_timestamp(concat(substr(C.trx_date,1,10)," ",substr(C.Auth_Time,1,length(C.Auth_Time)-4),":",substr(C.Auth_Time,length(C.Auth_Time)-3,2),":",substr(C.Auth_Time,length(C.Auth_Time)-1,2))), 'yyyy-MM-dd HH:mm:ss')as timestamp) >= cast(from_unixtime(unix_timestamp(P.d_pos_trans_start_time), 'yyyy-MM-dd HH:mm:ss') as timestamp)
+AND cast(from_unixtime(unix_timestamp(concat(substr(C.trx_date,1,10)," ",substr(C.Auth_Time,1,length(C.Auth_Time)-4),":",substr(C.Auth_Time,length(C.Auth_Time)-3,2),":",substr(C.Auth_Time,length(C.Auth_Time)-1,2))), 'yyyy-MM-dd HH:mm:ss')as timestamp) <= cast(from_unixtime(unix_timestamp(P.d_pos_trans_end_time), 'yyyy-MM-dd HH:mm:ss') as timestamp)
+    
+LIMIT 10
+
+#####--------------Draft five------------------
+SELECT *
+FROM   (SELECT *
+        FROM   cc_trx_vegas C
+               JOIN pos_trans_hdr P
+                 ON ( C.prop_code = P.c_prop_cd
+                      AND C.trx_date = P.d_pos_trans_dt
+                      AND C.pos_amt = P.f_total_payment_amt ))
+WHERE
+Concat(Substr(trx_date, 1, 10), " ", Substr(auth_time, 1,
+                                       Length(auth_time) - 4), ":", Substr(auth_time, Length(auth_time) - 3, 2), ":", Substr(auth_time,
+                                                                                                                            Length(auth_time) - 1, 2)) >= d_pos_trans_start_time
+AND
+Concat(Substr(trx_date, 1, 10), " ", Substr(auth_time, 1,
+                                       Length(auth_time) - 4), ":", Substr(auth_time, Length(auth_time) - 3, 2), ":", Substr(auth_time,
+                                                                                                                            Length(auth_time) - 1, 2)) <= d_pos_trans_end_time 
+LIMIT 10
+
+#####--------------WORKING V.1 (runs, returns zero records)--------------
+SELECT *
+        FROM   cc_trx C
+               JOIN pos_trans_hdr P
+                 ON ( C.prop_code = P.c_prop_cd
+                      AND C.trx_date = P.d_pos_trans_dt
+                      AND C.pos_amt = P.f_total_payment_amt )
+                      
+WHERE
+Concat(Substr(c.trx_date, 1, 10), " ", Substr(c.auth_time, 1,
+                                       Length(c.auth_time) - 4), ":", Substr(c.auth_time, Length(c.auth_time) - 3, 2), ":", Substr(c.auth_time,
+                                                                                                                            Length(c.auth_time) - 1, 2)) >= p.d_pos_trans_start_time
+AND
+Concat(Substr(c.trx_date, 1, 10), " ", Substr(c.auth_time, 1,
+                                       Length(c.auth_time) - 4), ":", Substr(c.auth_time, Length(c.auth_time) - 3, 2), ":", Substr(c.auth_time,
+                                                                                                                            Length(c.auth_time) - 1, 2)) <= p.d_pos_trans_end_time
+                                                                                                                            
+AND c.region='LVM'
+LIMIT 10
+
+
+#####--------------WORKING V.2 (runs, returns XXXX)--------------
+
+SELECT *
+        FROM   cc_trx C
+               JOIN pos_trans_hdr P
+                 ON ( C.prop_code = P.c_prop_cd
+                      AND Substr(C.trx_date,1,10) = P.d_pos_trans_dt
+                      AND C.amount = P.f_total_payment_amt )
+                      
+WHERE
+Cast(Concat(Substr(c.trx_date, 1, 10), Substr(c.auth_time, 1,
+                                       Length(c.auth_time) - 4), Substr(c.auth_time, Length(c.auth_time) - 3, 2), Substr(c.auth_time,
+                                                                                                                            Length(c.auth_time) - 1, 2)) AS BIGINT) >= Cast(Regexp_replace(":","",Regexp_replace("-","",Regexp_replace("\s","",p.d_pos_trans_start_time))) AS BIGINT)
+AND
+Cast(Concat(Substr(c.trx_date, 1, 10), Substr(c.auth_time, 1,
+                                       Length(c.auth_time) - 4), Substr(c.auth_time, Length(c.auth_time) - 3, 2), Substr(c.auth_time,
+                                                                                                                            Length(c.auth_time) - 1, 2)) AS BIGINT) <= Cast(Regexp_replace(":","",Regexp_replace("-","",Regexp_replace("\s","",p.d_pos_trans_end_time))) AS BIGINT)
+
+AND c.region='LVM'
+LIMIT 10
+
+#####--------------Ideas for Join on closest pos_trans_hdr time (not between)--------------
+
+SELECT *
+        FROM   cc_trx C
+               INNER JOIN pos_trans_hdr P
+                 ON ( C.prop_code = P.c_prop_cd
+                      AND Substr(C.trx_date,1,10) = P.d_pos_trans_dt
+                      AND C.amount = P.f_total_payment_amt )
+
+WHERE
+
+DECLARE @STARTDATE DATETIME = '10:15:45'
+DECLARE @ENDDATE DATETIME = '14:00:15'
+DECLARE @24DATE DATETIME
+SET @24DATE = '23:59:59.000'
+
+IF (@STARTDATE > @ENDDATE)
+  SELECT DATEADD(SECOND, 1, CONVERT(TIME(0), (@24DATE -(@ENDDATE - @STARTDATE))))
+ELSE
+  SELECT CONVERT(TIME(0), ((@ENDDATE - @STARTDATE)))
+
+
+datetime1 = Concat(Substr(c.trx_date, 1, 10), " ",
+Substr(c.auth_time, 1,Length(c.auth_time) - 4), ":",
+Substr(c.auth_time, Length(c.auth_time) - 3, 2), ":",
+Substr(c.auth_time,Length(c.auth_time) - 1, 2))
+
+Find MIN(UNIX_TIMESTAMP(datetime1)-UNIX_TIMESTAMP(p.d_pos_trans_end_time))
+
+AND c.region='LVM'
+
+#####--------------Succint IDEA Join on closest pos_trans_hdr time (not between)--------------
+
+SELECT *
+        FROM   cc_trx C
+               INNER JOIN pos_trans_hdr P
+                 ON ( C.prop_code = P.c_prop_cd
+                      AND Substr(C.trx_date,1,10) = P.d_pos_trans_dt
+                      AND C.amount = P.f_total_payment_amt )
+
+WHERE
+
+datetime1 = Concat(Substr(c.trx_date, 1, 10), " ",
+Substr(c.auth_time, 1,Length(c.auth_time) - 4), ":",
+Substr(c.auth_time, Length(c.auth_time) - 3, 2), ":",
+Substr(c.auth_time,Length(c.auth_time) - 1, 2))
+
+Find MIN(UNIX_TIMESTAMP(datetime1)-UNIX_TIMESTAMP(p.d_pos_trans_end_time))
+
+AND c.region='LVM'
+
+#####--------------Preliminary Basket Analysis--------------
+
+SELECT T.d_pos_trans_dt, T.d_pos_trans_start_time, T.d_pos_trans_end_time, T.i_item_id, T.c_item_desc, T.i_item_qty, T.f_item_amt, I.c_master_group_desc, I.c_family_group_desc FROM pos_trans_line_item T
+     INNER JOIN pos_item I
+        ON ( T.i_item_id = I.i_item_id
+             AND T.c_prop_cd = I.c_prop_cd)
+WHERE T.c_prop_cd = "CLV"
+AND T.d_pos_trans_dt >= "2013-06-01"
+
+#####--------------Las Vegas Basket Analysis (CRASHED SERVER)--------------
+
+SELECT T.c_prop_cd, T.d_pos_trans_dt, T.d_pos_trans_start_time, T.d_pos_trans_end_time, T.i_item_id,
+T.c_item_desc, T.i_item_qty, T.f_item_amt,
+I.c_master_group_desc, I.c_family_group_desc,P.c_pos_rev_center_desc FROM pos_trans_line_item T
+     INNER JOIN pos_item I
+        ON ( T.i_item_id = I.i_item_id
+             AND T.c_prop_cd = I.c_prop_cd)
+     LEFT OUTER JOIN pos_revenue_center P
+        ON ( P.c_pos_rev_center_cd = T.c_pos_rev_center_cd
+             AND P.c_prop_cd = T.c_prop_cd)
+AND T.d_pos_trans_dt >= "2013-08-01"
+AND T.c_prop_cd in ('BLV','CLV','CPLV','FLV','FMV','HLV','LAS','ILV','PHV','PLV','RLV')
+
+#####--------------Las Vegas Basket Analysis Better (RUN THIS)--------------
+
+ SELECT DISTINCT T1.c_pos_trans_id               c1,
+                T1.i_pos_trans_line_item_seq_id c2,
+                T1.c_prop_cd                    c3,
+                T1.c_trans_type_cd              c4,
+                T1.c_pos_rev_center_cd          c5,
+                T1.d_pos_trans_dt               c6,
+                T1.i_check_nbr                  c7,
+                T1.d_pos_trans_start_time       c8,
+                T1.d_pos_trans_end_time         c9,
+                T1.i_item_id                    c10,
+                T1.i_xref_dmid                  c11,
+                T1.c_item_desc                  c12,
+                T1.i_item_qty                   c13,
+                T1.f_item_amt                   c14,
+                T2.i_master_group_id            c15,
+                T2.c_master_group_desc          c16,
+                T2.i_family_group_id            c17,
+                T2.c_family_group_desc          c18,
+                T3.c_pos_rev_center_desc        c19
+FROM   vedw.pos_trans_line_item T1,
+       vedw.pos_item T2,
+       vedw.pos_trans_hdr T4,
+       vedw.pos_revenue_center T3
+WHERE  T1.c_prop_cd = T2.c_prop_cd
+       AND T1.i_item_id" = T2."i_item_id"
+       AND T1.d_pos_trans_dt >= T2.d_effective_start_dt
+       AND T1.d_pos_trans_dt <= T2.d_effective_end_dt
+       AND T4.c_pos_trans_id = T1.c_pos_trans_id
+       AND T4.c_prop_cd = T1.c_prop_cd
+       AND T4.c_pos_rev_center_cd = T1.c_pos_rev_center_cd
+       AND T4.d_pos_trans_dt = T1.d_pos_trans_dt
+       AND T4.i_check_nbr = T1.i_check_nbr
+       AND T4.d_pos_trans_start_time = T1.d_pos_trans_start_time
+       AND T4.d_pos_trans_end_time = T1.d_pos_trans_end_time
+       AND T4.c_trans_type_cd = T1.c_trans_type_cd
+       AND T4.c_pos_rev_center_cd = T3.c_pos_rev_center_cd
+       AND T4.c_prop_cd = T3.c_prop_cd
+       AND T4.d_pos_trans_dt >= T3.d_effective_start_dt
+       AND T4.d_pos_trans_dt <= T3.d_effective_end_dt
+       AND T1.c_prop_cd IN ( 'BLV', 'CLV', 'FLV', 'ILV',
+                               'PLV', 'RLV', 'PHV', 'LAS' )
+       AND T1.d_pos_trans_dt >= {d '2013-08-01'}  
+
+#####--------------Shelf Compare Table Creation--------------
+
+create table shelf2_0_test.guest_cat_a
+
+(before_cat STRING, after_cat STRING, cust_id bigint);
+
+insert into table shelf2_0_test.guest_cat_a
+
+SELECT prod.c_campaign_cd, revo.c_campaign_cd, revo.i_dmid FROM revo_score_out_20131204 revo
+
+JOIN prod_score_out_20131204 prod ON (revo.i_dmid = prod.i_dmid)
+
+#####--------------Shelf Compare Table Creation Part 2--------------
+
+SELECT before_cat, after_cat, count(cust_id) as count FROM guest_cat_a
+GROUP BY before_cat, after_cat
+
+#####--------------Shelf catagory Count (WRONG)--------------
+
+SELECT revo.c_prop_cd, prod.c_prop_cd, count(revo.c_prop_cd) FROM revo_score_out_20131204 revo
+
+JOIN prod_score_out_20131204 prod ON (revo.f_actual_all = prod.f_actual_all)
+
+GROUP BY revo.c_prop_cd, prod.c_prop_cd
