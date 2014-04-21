@@ -222,7 +222,7 @@ AND T.c_prop_cd in ('BLV','CLV','CPLV','FLV','FMV','HLV','LAS','ILV','PHV','PLV'
 
 #####--------------Las Vegas Basket Analysis Better (RUN THIS)--------------
 
- SELECT DISTINCT T1.c_pos_trans_id               c1,
+ SELECT DISTINCT T1.c_pos_trans_id              c1,
                 T1.i_pos_trans_line_item_seq_id c2,
                 T1.c_prop_cd                    c3,
                 T1.c_trans_type_cd              c4,
